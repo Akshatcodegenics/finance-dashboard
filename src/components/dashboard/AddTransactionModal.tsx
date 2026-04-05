@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Save } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import type { TransactionType } from '../../store/useStore';
 
@@ -10,29 +10,58 @@ interface ModalProps {
 }
 
 export function AddTransactionModal({ isOpen, onClose }: ModalProps) {
-  const addTransaction = useStore(state => state.addTransaction);
+  const { addTransaction, updateTransaction, editingTransaction, setEditingTransaction } = useStore();
 
   const [date, setDate] = useState('');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('');
   const [type, setType] = useState<TransactionType>('expense');
 
+  // Load existing data if editing
+  useEffect(() => {
+    if (editingTransaction && isOpen) {
+      setDate(editingTransaction.date);
+      setAmount(editingTransaction.amount.toString());
+      setCategory(editingTransaction.category);
+      setType(editingTransaction.type);
+    } else if (isOpen && !editingTransaction) {
+      setDate('');
+      setAmount('');
+      setCategory('');
+      setType('expense');
+    }
+  }, [editingTransaction, isOpen]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!date || !amount || !category) return;
 
-    addTransaction({
-      id: Date.now().toString(),
-      date,
-      amount: parseFloat(amount),
-      category,
-      type
-    });
+    if (editingTransaction) {
+      updateTransaction(editingTransaction.id, {
+        ...editingTransaction,
+        date,
+        amount: parseFloat(amount),
+        category,
+        type
+      });
+    } else {
+      addTransaction({
+        id: Date.now().toString(),
+        date,
+        amount: parseFloat(amount),
+        category,
+        type
+      });
+    }
 
-    // Reset & Close
+    handleClose();
+  };
+
+  const handleClose = () => {
     setDate('');
     setAmount('');
     setCategory('');
+    setEditingTransaction(null);
     onClose();
   };
 
@@ -44,9 +73,9 @@ export function AddTransactionModal({ isOpen, onClose }: ModalProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-text-main/20 backdrop-blur-sm z-50 pointer-events-none"
+            className="fixed inset-0 bg-text-main/20 backdrop-blur-sm z-[100] pointer-events-none"
           />
-          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-auto p-4">
+          <div className="fixed inset-0 flex items-center justify-center z-[110] pointer-events-auto p-4">
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -57,13 +86,15 @@ export function AddTransactionModal({ isOpen, onClose }: ModalProps) {
               <div className="absolute top-0 right-0 w-32 h-32 bg-primary/20 blur-[60px] rounded-full pointer-events-none" />
               
               <button 
-                onClick={onClose}
+                onClick={handleClose}
                 className="absolute top-6 right-6 text-text-muted hover:text-text-main transition-colors bg-elevated/50 p-2 rounded-full cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <h2 className="text-2xl font-display font-bold text-text-main mb-6">Add Transaction</h2>
+              <h2 className="text-2xl font-display font-bold text-text-main mb-6">
+                {editingTransaction ? "Edit Transaction" : "Add Transaction"}
+              </h2>
 
               <form onSubmit={handleSubmit} className="space-y-5 relative z-10">
                 <div className="flex gap-4 p-1 bg-elevated rounded-xl">
@@ -100,13 +131,15 @@ export function AddTransactionModal({ isOpen, onClose }: ModalProps) {
                     <option value="Entertainment">Entertainment</option>
                     <option value="Salary">Salary</option>
                     <option value="Freelance">Freelance</option>
+                    <option value="Transfer to Savings">Transfer to Savings</option>
+                    <option value="Transfer to Checking">Transfer to Checking</option>
                     <option value="Other">Other</option>
                   </select>
                 </div>
 
                 <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-white font-medium py-3 rounded-xl transition-colors mt-4 flex items-center justify-center gap-2 cursor-pointer shadow-[0_10px_25px_-5px_rgba(59,130,246,0.3)]">
-                  <Plus className="w-5 h-5" />
-                  Add Transaction
+                  {editingTransaction ? <Save className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                  {editingTransaction ? "Save Changes" : "Save Transaction"}
                 </button>
               </form>
             </motion.div>

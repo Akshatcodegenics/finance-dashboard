@@ -122,7 +122,13 @@ export function TransactionTable() {
                   {role === 'admin' && (
                     <td className="py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover/row:opacity-100 transition-opacity">
-                        <button className="p-1.5 text-text-muted hover:text-primary transition-colors cursor-pointer rounded bg-white shadow-sm border border-elevated">
+                        <button 
+                          onClick={() => {
+                            useStore.getState().setEditingTransaction(tx);
+                            setAddModalOpen(true);
+                          }}
+                          className="p-1.5 text-text-muted hover:text-primary transition-colors cursor-pointer rounded bg-white shadow-sm border border-elevated"
+                        >
                           <Edit2 className="w-4 h-4" />
                         </button>
                         <button 

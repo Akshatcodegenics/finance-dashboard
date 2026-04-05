@@ -21,6 +21,9 @@ interface AppState {
   isCommandOpen: boolean;
   setCommandOpen: (isOpen: boolean) => void;
 
+  editingTransaction: Transaction | null;
+  setEditingTransaction: (tx: Transaction | null) => void;
+
   transactions: Transaction[];
   addTransaction: (tx: Transaction) => void;
   deleteTransaction: (id: string) => void;
@@ -46,6 +49,9 @@ export const useStore = create<AppState>((set) => ({
 
   isCommandOpen: false,
   setCommandOpen: (isOpen) => set({ isCommandOpen: isOpen }),
+
+  editingTransaction: null,
+  setEditingTransaction: (tx) => set({ editingTransaction: tx }),
 
   transactions: mockTransactions,
   addTransaction: (tx) => set((state) => ({ transactions: [tx, ...state.transactions] })),
